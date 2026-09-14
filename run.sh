@@ -12,7 +12,7 @@
 #   ./run.sh shell        interactive shell inside the running container
 #   ./run.sh url          print the viewing URLs
 #   ./run.sh open         open noVNC in the default macOS browser
-#   ./run.sh screenshare  open macOS Screen Sharing on the native VNC port
+#   ./run.sh viewer       launch a native VNC client (TigerVNC), if installed
 #
 # Environment overrides:
 #   IMAGE=chrome-wayland        image tag
@@ -125,7 +125,8 @@ cmd_url() {
   cat <<EOF
 
   Browser (noVNC):   ${NOVNC_URL}
-  Native VNC:        ${VNC_URL}      (Finder > Go > Connect to Server, no password)
+  Native VNC:        ${VNC_URL}      (needs a client that supports no-auth VNC;
+                                       macOS Screen Sharing does NOT -- see ./run.sh viewer)
 
   ./run.sh open          view it now
   ./run.sh logs          follow logs
@@ -135,7 +136,39 @@ EOF
 }
 
 cmd_open()        { open "$NOVNC_URL"; }
-cmd_screenshare()  { open "$VNC_URL"; }
+
+# wayvnc only offers RFB security type 1 ("None"). macOS Screen Sharing requires
+# VNC Auth or Apple's ARD types and fails with "Connection failed to localhost",
+# so it can't be used here. Launch a client that does support no-auth VNC.
+cmd_viewer() {
+  local bin
+  for bin in vncviewer /Applications/TigerVNC\ Viewer.app/Contents/MacOS/TigerVNC\ Viewer; do
+    if command -v "$bin" >/dev/null 2>&1 || [ -x "$bin" ]; then
+      log "Launching $bin"
+      "$bin" "localhost:${VNC_PORT}" &
+      return 0
+    fi
+  done
+  cat >&2 <<EOF
+
+No no-auth-capable VNC client found.
+
+  macOS Screen Sharing cannot connect to this container. wayvnc offers only RFB
+  security type 1 ("None"), and Apple's client requires VNC Auth or ARD. wayvnc
+  supports TLS and RSA-AES instead, neither of which Apple's client speaks, so
+  adding a password would not help.
+
+Use the browser viewer instead (no install, works today):
+
+  ./run.sh open        ${NOVNC_URL}
+
+Or install a compatible native client:
+
+  brew install --cask tigervnc-viewer   # then: ./run.sh viewer
+
+EOF
+  return 1
+}
 cmd_logs()        { podman logs -f "$NAME"; }
 cmd_status()      { podman ps -a --filter "name=^${NAME}$"; }
 cmd_shell()       { podman exec -it "$NAME" bash; }
@@ -151,6 +184,7 @@ case "${1:-default}" in
   shell)       cmd_shell ;;
   url)         cmd_url ;;
   open)        cmd_open ;;
-  screenshare) cmd_screenshare ;;
+  viewer)      cmd_viewer ;;
+  screenshare) warn "macOS Screen Sharing cannot connect to wayvnc (no-auth VNC)."; cmd_viewer ;;
   *)           die "Unknown command '$1'. See the header of $0 for usage." ;;
 esac

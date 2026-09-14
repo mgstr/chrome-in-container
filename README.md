@@ -47,13 +47,25 @@ container, and opens noVNC in your Mac browser.
 | `./run.sh shell` | bash inside the running container |
 | `./run.sh url` | print the viewing URLs |
 | `./run.sh open` | open noVNC in your default browser |
-| `./run.sh screenshare` | open macOS Screen Sharing on `vnc://localhost:5900` |
+| `./run.sh viewer` | launch a native VNC client (TigerVNC), if installed |
 
 ## Viewing
 
 - **Browser (no extra software):** <http://localhost:6080/vnc.html?autoconnect=1&resize=scale>
-- **Native VNC:** `vnc://localhost:5900` — Finder → Go → Connect to Server, or
-  `./run.sh screenshare`. Snappier than noVNC. No password.
+  — this is the recommended path and needs nothing installed.
+- **Native VNC:** `vnc://localhost:5900`, via `./run.sh viewer`.
+
+> **macOS Screen Sharing does not work with this container.** wayvnc offers only
+> RFB security type 1 (`None`), and Apple's Screen Sharing client requires VNC Auth
+> or Apple's ARD security types, so it fails with *"Connection failed to
+> localhost"*. Setting a password would not help either: wayvnc authenticates with
+> TLS or RSA-AES, neither of which Apple's client speaks. Use noVNC, or install a
+> client that accepts no-auth VNC:
+>
+> ```sh
+> brew install --cask tigervnc-viewer
+> ./run.sh viewer
+> ```
 
 Both ports are published to `127.0.0.1` on the Mac only, so nothing is reachable
 from your network.
