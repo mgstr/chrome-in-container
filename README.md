@@ -20,15 +20,8 @@ so no DRM device or GPU passthrough is needed.
 ## Quick start
 
 ```sh
-chmod +x run.sh entrypoint.sh   # see note below
 ./run.sh
 ```
-
-> **Note on file permissions.** These sources were uploaded through the GitHub web
-> UI, which cannot preserve the executable bit, so `run.sh` and `entrypoint.sh`
-> arrive as mode `100644`. Run `chmod +x run.sh entrypoint.sh` once after cloning
-> (or just use `bash run.sh`). `entrypoint.sh` is re-marked executable inside the
-> image by the `Containerfile`, so the container itself is unaffected.
 
 That creates the podman machine if missing, builds the image, starts the
 container, and opens noVNC in your Mac browser.
