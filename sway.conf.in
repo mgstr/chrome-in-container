@@ -1,0 +1,22 @@
+# Rendered to $XDG_RUNTIME_DIR/sway.conf by entrypoint.sh (@VARS@ substituted).
+
+# The wlroots headless backend exposes a single virtual output.
+output HEADLESS-1 resolution @RESOLUTION@ position 0,0
+
+# No decorations: a single Chromium window fills the output.
+default_border none
+default_floating_border none
+hide_edge_borders both
+focus_follows_mouse no
+
+# Nothing X11 in this image.
+xwayland disable
+
+# Stream the compositor output. Bound to 0.0.0.0 inside the container only;
+# run.sh publishes the ports to 127.0.0.1 on the Mac.
+exec wayvnc --render-cursor 0.0.0.0 5900
+
+# Serve noVNC's web client and proxy it to wayvnc.
+exec websockify --web=/usr/share/novnc 6080 127.0.0.1:5900
+
+exec @LAUNCHER@
